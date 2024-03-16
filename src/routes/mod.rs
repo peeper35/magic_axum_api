@@ -9,6 +9,7 @@ pub mod handlers;
 pub async fn mount() -> MagicAppResult<Router> {
     let db_url = env::var("DATABASE_URL")
         .inspect_err(|e| warn!("Missing Database URL From DotEnv FIle: {e}"))?;
+    info!("{}", db_url);
     let db_conn = get_connection(&db_url)
         .await
         .inspect_err(|e| error!("Error while connecting to PG Database: {e}"))?;
