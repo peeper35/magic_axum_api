@@ -16,6 +16,6 @@ COPY ./src ./src
 RUN rm ./target/release/deps/magic_axum_api*
 RUN cargo build --release
 
-FROM debian:buster-slim
+FROM debian:bullseye
 COPY --from=build /magic_axum_api/target/release/magic_axum_api .
 CMD ["./magic_axum_api"]
