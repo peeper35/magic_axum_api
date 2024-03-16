@@ -1,4 +1,4 @@
-FROM rust:rust:1.76.0-alpine3.19 as build
+FROM rust:rust:1.76.0 as build
 
 # create a new empty shell project
 RUN USER=root cargo new --bin magic_axum_api
