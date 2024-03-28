@@ -1,4 +1,4 @@
-name: Magic Axum API
+name: "Magic Axum API"
 
 on:
   push:
@@ -6,25 +6,22 @@ on:
       - main
 
 jobs:
-  deploy:
+  deploy-vps:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Build Docker Image
-        run: docker build -t registry.heroku.com/${{ secrets.HEROKU_APP }}/web:latest .
-
-      - name: Docker image Info
-        run: docker images
-
-      - name: Login to Container Registry
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: heroku container:login
-
-      - name: Push Docker Image
-        run: docker push registry.heroku.com/${{ secrets.HEROKU_APP }}/web
-
-      - name: Release
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: heroku container:release -a ${{ secrets.HEROKU_APP }} web
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build for release
+        run: cargo build --release
+        shell: bash
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+      - name: rsync over SSH
+        run: rsync -r ./target/release/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PROJECT_DIRECTORY }}
+        shell: bash
+      - name: Start process
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' < start.sh ./${{ secrets.PROJECT_DIRECTORY }} ${{ secrets.PROJECT_NAME }}
+        shell: bash
