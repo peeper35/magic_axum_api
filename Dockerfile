@@ -18,4 +18,5 @@ RUN cargo build --release
 
 FROM ubuntu:latest
 COPY --from=build /magic_axum_api/target/release/magic_axum_api .
+EXPOSE 3000
 CMD ["./magic_axum_api"]

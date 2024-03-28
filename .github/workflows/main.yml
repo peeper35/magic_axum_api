@@ -11,18 +11,17 @@ jobs:
     container: centos:latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: Build for release
-        run: cargo build --release
-        shell: bash
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.PROJECT_NAME }} .
+      - name: Save Docker Image
+        run: docker save -o ${{ secrets.PROJECT_NAME }}.tar ${{ secrets.PROJECT_NAME }}
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
       - name: rsync over SSH
-        run: rsync -r ./target/release/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PROJECT_DIRECTORY }}
+        run: rsync -r ./${{ secrets.PROJECT_NAME }}.tar ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PROJECT_DIRECTORY }}
         shell: bash
       - name: Start process
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' < start.sh ./${{ secrets.PROJECT_DIRECTORY }} ${{ secrets.PROJECT_NAME }}
