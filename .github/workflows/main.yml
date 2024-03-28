@@ -8,7 +8,6 @@ on:
 jobs:
   deploy-vps:
     runs-on: ubuntu-latest
-    container: centos:latest
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker Image
