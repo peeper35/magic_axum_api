@@ -10,9 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker Image
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: docker build --build-arg DATABASE_URL=DATABASE_URL -t magic_axum_api .
+        run: docker build --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} -t magic_axum_api .
       - name: Save Docker Image
         run: docker save -o magic_axum_api.tar magic_axum_api
       - name: Install SSH key
