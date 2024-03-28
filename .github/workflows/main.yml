@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build Docker Image
-        run: docker build --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} -t ${{ secrets.PROJECT_NAME }} .
+        run: docker build --build-arg DATABASE_URL=${echo ${{ secrets.DATABASE_URL }}} -t ${{ secrets.PROJECT_NAME }} .
       - name: Save Docker Image
         run: docker save -o ${{ secrets.PROJECT_NAME }}.tar ${{ secrets.PROJECT_NAME }}
       - name: Install SSH key
