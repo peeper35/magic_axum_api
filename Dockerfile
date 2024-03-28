@@ -22,7 +22,7 @@ FROM ubuntu:latest
 
 COPY --from=build /magic_axum_api/target/release/magic_axum_api .
 
-ENV DATABASE_URL=$DATABASE_URL
+ENV DATABASE_URL=assadasd
 
 EXPOSE 3000
 
