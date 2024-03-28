@@ -9,6 +9,7 @@ jobs:
   deploy-vps:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
       - name: Build for release
