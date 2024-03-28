@@ -22,5 +22,5 @@ jobs:
         run: rsync -r ./magic_axum_api.tar ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PROJECT_DIRECTORY }}
         shell: bash
       - name: Start process
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' < start.sh ./${{ secrets.PROJECT_DIRECTORY }} magic_axum_api
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' < start.sh
         shell: bash
