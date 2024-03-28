@@ -1,5 +1,7 @@
 FROM rust:1.76.0 as build
 
+ARG DATABASE_URL
+
 # create a new empty shell project
 RUN USER=root cargo new --bin magic_axum_api
 WORKDIR /magic_axum_api
@@ -19,8 +21,6 @@ RUN cargo build --release
 FROM ubuntu:latest
 
 COPY --from=build /magic_axum_api/target/release/magic_axum_api .
-
-ARG DATABASE_URL
 
 ENV DATABASE_URL=$DATABASE_URL
 
