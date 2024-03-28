@@ -1,5 +1,4 @@
 name: "Magic Axum API"
-
 on:
   push:
     branches:
@@ -13,17 +12,17 @@ jobs:
       - name: Build Docker Image
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: docker build --build-arg DATABASE_URL=DATABASE_URL -t ${{ secrets.PROJECT_NAME }} .
+        run: docker build --build-arg DATABASE_URL=DATABASE_URL -t magic_axum_api .
       - name: Save Docker Image
-        run: docker save -o ${{ secrets.PROJECT_NAME }}.tar ${{ secrets.PROJECT_NAME }}
+        run: docker save -o magic_axum_api.tar magic_axum_api
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
       - name: rsync over SSH
-        run: rsync -r ./${{ secrets.PROJECT_NAME }}.tar ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PROJECT_DIRECTORY }}
+        run: rsync -r ./magic_axum_api.tar ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.PROJECT_DIRECTORY }}
         shell: bash
       - name: Start process
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' < start.sh ./${{ secrets.PROJECT_DIRECTORY }} ${{ secrets.PROJECT_NAME }}
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' < start.sh ./${{ secrets.PROJECT_DIRECTORY }} magic_axum_api
         shell: bash
