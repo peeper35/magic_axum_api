@@ -12,7 +12,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
       - name: Build for release
-        run: pwd
+        run: cargo build --release
         shell: bash
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
