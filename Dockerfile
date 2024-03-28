@@ -17,7 +17,13 @@ RUN rm ./target/release/deps/magic_axum_api*
 RUN cargo build --release
 
 FROM ubuntu:latest
+
+ARG DATABASE_URL=local
+
 COPY --from=build /magic_axum_api/target/release/magic_axum_api .
+
 ENV DATABASE_URL=${DATABASE_URL}
+
 EXPOSE 3000
+
 CMD ["./magic_axum_api"]
