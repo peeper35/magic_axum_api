@@ -1,6 +1,16 @@
 use crate::error::MagicApiError;
+use axum::extract::FromRequestParts;
 use axum::{body::Body, extract::FromRequest, http::Response, response::IntoResponse};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+#[derive(FromRequestParts, Deserialize)]
+#[from_request(via(axum::extract::Query), rejection(MagicApiError))]
+pub struct MagicApiQuery<T>(pub T);
+
+#[derive(Deserialize)]
+pub struct GetMagicNosRequestQuery {
+    pub account: String,
+}
 
 pub enum Message {
     EmptyData,
@@ -53,4 +63,10 @@ impl<T> ResponseData<T> {
 #[derive(Serialize)]
 pub struct GetAccounts {
     pub accounts: Vec<String>,
+}
+
+#[derive(Serialize)]
+pub struct GetAccountMagicNos {
+    pub account: String,
+    pub magic_numbers: Vec<i32>,
 }

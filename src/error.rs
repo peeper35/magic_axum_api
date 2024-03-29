@@ -2,6 +2,7 @@ use sea_orm::DbErr;
 use serde::Serialize;
 use thiserror::Error;
 
+use axum::extract::rejection::QueryRejection;
 use axum::http::StatusCode;
 use axum::{extract::rejection::JsonRejection, response::IntoResponse};
 use std::env::VarError;
@@ -25,6 +26,8 @@ pub enum MagicApiError {
     NotFount404,
     #[error("JSON Rejection")]
     JsonRejection(#[from] JsonRejection),
+    #[error("Query Rejection")]
+    QueryRejection(#[from] QueryRejection),
     #[error("DB Error")]
     DbError(#[from] DbErr),
 }
@@ -39,6 +42,7 @@ impl IntoResponse for MagicApiError {
 
         let (status, message) = match self {
             MagicApiError::JsonRejection(rejection) => (rejection.status(), rejection.body_text()),
+            MagicApiError::QueryRejection(rejection) => (rejection.status(), rejection.body_text()),
             MagicApiError::NotFount404 => (StatusCode::NOT_FOUND, "Not Found".to_string()),
             MagicApiError::DbError(e) => {
                 warn!("Db Error: {:?}", e);
