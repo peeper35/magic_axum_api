@@ -54,7 +54,7 @@ async fn main() -> MagicAppResult<()> {
 }
 
 async fn hello_world() -> &'static str {
-    "Hello World! CI Test!"
+    "Hello World!"
 }
 
 async fn fallback_handler() -> MagicApiError {
