@@ -24,7 +24,7 @@ pub async fn get_accounts(
         .map(|row| row.get(magic::Column::Account).unwrap::<String>())
         .collect::<Vec<String>>();
 
-    return if accounts.is_empty() {
+    if accounts.is_empty() {
         Ok(MagicApiJson::new(ResponseData::new(
             200,
             Some(Message::EmptyData.into()),
@@ -36,7 +36,7 @@ pub async fn get_accounts(
             None,
             Some(GetAccounts { accounts }),
         )))
-    };
+    }
 }
 
 #[axum::debug_handler]
@@ -54,7 +54,7 @@ pub async fn get_magic_nos(
         .map(|row| row.get(magic::Column::MagicNumber).unwrap::<i32>())
         .collect::<Vec<i32>>();
 
-    return if magic_numbers.is_empty() {
+    if magic_numbers.is_empty() {
         Ok(MagicApiJson::new(ResponseData::new(
             200,
             Some(Message::EmptyData.into()),
@@ -69,5 +69,5 @@ pub async fn get_magic_nos(
                 account: params.account,
             }),
         )))
-    };
+    }
 }

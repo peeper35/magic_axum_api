@@ -16,10 +16,10 @@ pub enum Message {
     EmptyData,
 }
 
-impl Into<String> for Message {
-    fn into(self) -> String {
-        match self {
-            Self::EmptyData => "Empty Data".to_string(),
+impl From<Message> for String {
+    fn from(val: Message) -> Self {
+        match val {
+            Message::EmptyData => "Empty Data".to_string(),
         }
     }
 }
