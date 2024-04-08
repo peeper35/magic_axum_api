@@ -2,9 +2,11 @@
 extern crate tracing;
 
 use crate::error::MagicApiError;
+use axum::http::Method;
 use axum::{routing::get, Router};
 use dotenv::dotenv;
 use error::MagicAppResult;
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
 use tracing_appender::rolling;
@@ -36,6 +38,9 @@ async fn main() -> MagicAppResult<()> {
         }))
         .init();
 
+    let cors_layer = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        .allow_origin(Any);
     let app = Router::new()
         .route("/", get(hello_world))
         .nest("/data", routes::mount().await?)
@@ -44,6 +49,7 @@ async fn main() -> MagicAppResult<()> {
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
                 .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
         )
+        .layer(cors_layer)
         .fallback(fallback_handler);
 
     let listener = tokio::net::TcpListener::bind(SERVE_AT).await.unwrap();
