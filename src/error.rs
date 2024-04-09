@@ -45,7 +45,7 @@ impl IntoResponse for MagicApiError {
             MagicApiError::QueryRejection(rejection) => (rejection.status(), rejection.body_text()),
             MagicApiError::NotFount404 => (StatusCode::NOT_FOUND, "Not Found".to_string()),
             MagicApiError::DbError(e) => {
-                warn!("Db Error: {:?}", e);
+                error!("Db Error: {:?}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "Internal Server Error".to_string(),

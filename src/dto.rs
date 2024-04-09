@@ -12,6 +12,12 @@ pub struct GetMagicNosRequestQuery {
     pub account: String,
 }
 
+#[derive(Deserialize)]
+pub struct GetTradesStats {
+    pub account: String,
+    pub magic_no: i32,
+}
+
 pub enum Message {
     EmptyData,
 }
@@ -69,4 +75,39 @@ pub struct GetAccounts {
 pub struct GetAccountMagicNos {
     pub account: String,
     pub magic_numbers: Vec<i32>,
+}
+
+#[derive(Serialize)]
+pub struct GetMagicNoStats {
+    pub account: String,
+    pub magic_number: i32,
+    pub trades_count: usize,
+    pub gross_profit: f32,
+    pub gross_loss: f32,
+    pub net_profit: f32,
+    pub profit_factor: f32,
+    pub winners_count: usize,
+    pub losers_count: usize,
+    pub win_percentage: f32,
+    pub lose_percentage: f32,
+    pub avg_win: f32,
+    pub avg_lose: f32,
+    pub avg_trade: f32,
+    pub best_trade: f32,
+    pub worst_trade: f32,
+    pub longest_trade: String,
+    pub longest_trade_time: String,
+    pub shortest_trade: String,
+    pub shortest_trade_time: String,
+    pub avg_trade_time: String,
+    pub total_win_pips: f32,
+    pub total_lose_pips: f32,
+    pub net_pips: f32,
+    pub avg_win_pips: f32,
+    pub avg_lose_pips: f32,
+    pub avg_net_pips: f32,
+    pub consecutive_win_trades: Option<usize>,
+    pub consecutive_profits: Option<f32>,
+    pub consecutive_lose_trades: Option<usize>,
+    pub consecutive_losses: Option<f32>,
 }

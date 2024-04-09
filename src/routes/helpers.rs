@@ -1,7 +1,170 @@
 use crate::entities::magic::Model;
+use chrono::{Duration, TimeDelta};
 
-pub fn get_win_loss_trades(trades: &Vec<Model>) -> (usize, usize) {
-    let winners = trades.iter().map(|m| m.pnl.parse::<f32>().unwrap()).filter(|pnl| *pnl >= 0.0).count();
-    let losers = trades.iter().map(|m| m.pnl.parse::<f32>().unwrap()).filter(|pnl| *pnl < 0.0).count();
+pub fn get_win_loss_trades(trades: &Vec<Model>) -> (Vec<&Model>, Vec<&Model>) {
+    let (winners, losers): (Vec<_>, Vec<_>) = trades
+        .iter()
+        .partition(|m| m.pnl.parse::<f32>().unwrap() >= 0.0);
+
     (winners, losers)
+}
+
+pub fn get_longest_shortest_trades(
+    trades: &Vec<Model>,
+) -> (
+    Option<String>,
+    TimeDelta,
+    Option<String>,
+    TimeDelta,
+    TimeDelta,
+) {
+    let (longest_trade, longest_time) = trades.iter().fold(
+        (None, TimeDelta::new(0, 0).unwrap()),
+        |(mut acc_longest, mut acc_time), trade| {
+            let difference = trade.close_time - trade.open_time;
+            if difference > acc_time {
+                acc_longest = Some(trade.order_id.to_string());
+                acc_time = difference;
+            }
+            (acc_longest, acc_time)
+        },
+    );
+
+    let (shortest_trade, shortest_time, total_duration) = trades.iter().fold(
+        (None, TimeDelta::new(31560000, 0).unwrap(), Duration::zero()),
+        |(mut acc_shortest, mut acc_time, mut acc_dur), trade| {
+            let difference = trade.close_time - trade.open_time;
+            if difference < acc_time {
+                acc_shortest = Some(trade.order_id.to_string());
+                acc_time = difference;
+            }
+            acc_dur += trade.close_time - trade.open_time;
+            (acc_shortest, acc_time, acc_dur)
+        },
+    );
+
+    (
+        longest_trade,
+        longest_time,
+        shortest_trade,
+        shortest_time,
+        total_duration,
+    )
+
+    // let mut total_time_diff_secs = TimeDelta::new(0, 0).unwrap();
+    //
+    // let mut longest_trade: Option<String> = None;
+    // let mut longest_trade_time = TimeDelta::new(0, 0).unwrap();
+    //
+    // for trade in trades {
+    //     let start_time = trade.open_time;
+    //     let end_time = trade.close_time;
+    //     let difference = end_time - start_time;
+    //
+    //     if difference > longest_trade_time {
+    //         longest_trade = Some(trade.order_id.to_string());
+    //         longest_trade_time = difference;
+    //     }
+    // }
+    //
+    // let mut shortest_trade: Option<String> = None;
+    // let mut shortest_trade_time = TimeDelta::new(31560000, 0).unwrap();
+    //
+    // for trade in trades {
+    //     let start_time = trade.open_time;
+    //     let end_time = trade.close_time;
+    //     let difference = end_time - start_time;
+    //
+    //     total_time_diff_secs += difference;
+    //
+    //     if difference < shortest_trade_time {
+    //         shortest_trade = Some(trade.order_id.to_string());
+    //         shortest_trade_time = difference;
+    //     }
+    // }
+    //
+    // (longest_trade, longest_trade_time, shortest_trade, shortest_trade_time, total_time_diff_secs)
+}
+
+pub fn get_longest_win_seq(pnls: &Vec<f32>) -> Option<(usize, f32)> {
+    let mut max_idx = 0;
+    let mut max_len = 0;
+    let mut curr_len = 0;
+    let mut curr_idx = 0;
+
+    for (k, &num) in pnls.iter().enumerate() {
+        if num > 0.0 {
+            curr_len += 1;
+
+            // New sequence, store beginning index.
+            if curr_len == 1 {
+                curr_idx = k;
+            }
+        } else {
+            if curr_len > max_len {
+                max_len = curr_len;
+                max_idx = curr_idx;
+            }
+            curr_len = 0;
+        }
+    }
+
+    if curr_len > max_len {
+        max_len = curr_len;
+        max_idx = curr_idx;
+    }
+
+    if max_len > 0 {
+        return Some((
+            max_len,
+            pnls[max_idx..max_idx + max_len].iter().sum::<f32>(),
+        ));
+    }
+
+    None
+}
+
+pub fn get_longest_lose_seq(pnls: &Vec<f32>) -> Option<(usize, f32)> {
+    let mut max_idx = 0;
+    let mut max_len = 0;
+    let mut curr_len = 0;
+    let mut curr_idx = 0;
+
+    for (k, &num) in pnls.iter().enumerate() {
+        if num < 0.0 {
+            curr_len += 1;
+
+            // New sequence, store beginning index.
+            if curr_len == 1 {
+                curr_idx = k;
+            }
+        } else {
+            if curr_len > max_len {
+                max_len = curr_len;
+                max_idx = curr_idx;
+            }
+            curr_len = 0;
+        }
+    }
+
+    if curr_len > max_len {
+        max_len = curr_len;
+        max_idx = curr_idx;
+    }
+
+    if max_len > 0 {
+        return Some((
+            max_len,
+            pnls[max_idx..max_idx + max_len].iter().sum::<f32>(),
+        ));
+    }
+
+    None
+}
+
+pub fn format_timedelta(time: &TimeDelta) -> String {
+    let hours = time.num_hours();
+    let minutes = time.num_minutes() % 60;
+
+    format!("{}:{}", hours, minutes)
 }
