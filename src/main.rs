@@ -6,7 +6,7 @@ use axum::http::Method;
 use axum::{routing::get, Router};
 use dotenv::dotenv;
 use error::MagicAppResult;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
 use tracing_appender::rolling;
@@ -38,9 +38,12 @@ async fn main() -> MagicAppResult<()> {
         }))
         .init();
 
+    let origins = ["https://fx-trade-pratikmks-projects.vercel.app"
+        .parse()
+        .unwrap()];
     let cors_layer = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST])
-        .allow_origin(Any);
+        .allow_origin(origins);
     let app = Router::new()
         .route("/", get(hello_world))
         .nest("/data", routes::mount().await?)
