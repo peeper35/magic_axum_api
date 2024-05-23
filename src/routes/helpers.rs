@@ -1,7 +1,7 @@
 use crate::entities::magic::Model;
 use chrono::{Duration, TimeDelta};
 
-pub fn get_win_loss_trades(trades: &Vec<Model>) -> (Vec<&Model>, Vec<&Model>) {
+pub fn get_win_loss_trades(trades: &[Model]) -> (Vec<&Model>, Vec<&Model>) {
     let (winners, losers): (Vec<_>, Vec<_>) = trades
         .iter()
         .partition(|m| m.pnl.parse::<f32>().unwrap() >= 0.0);
@@ -10,7 +10,7 @@ pub fn get_win_loss_trades(trades: &Vec<Model>) -> (Vec<&Model>, Vec<&Model>) {
 }
 
 pub fn get_longest_shortest_trades(
-    trades: &Vec<Model>,
+    trades: &[Model],
 ) -> (
     Option<String>,
     TimeDelta,
@@ -86,7 +86,7 @@ pub fn get_longest_shortest_trades(
     // (longest_trade, longest_trade_time, shortest_trade, shortest_trade_time, total_time_diff_secs)
 }
 
-pub fn get_longest_win_seq(pnls: &Vec<f32>) -> Option<(usize, f32)> {
+pub fn get_longest_win_seq(pnls: &[f32]) -> Option<(usize, f32)> {
     let mut max_idx = 0;
     let mut max_len = 0;
     let mut curr_len = 0;
@@ -124,7 +124,7 @@ pub fn get_longest_win_seq(pnls: &Vec<f32>) -> Option<(usize, f32)> {
     None
 }
 
-pub fn get_longest_lose_seq(pnls: &Vec<f32>) -> Option<(usize, f32)> {
+pub fn get_longest_lose_seq(pnls: &[f32]) -> Option<(usize, f32)> {
     let mut max_idx = 0;
     let mut max_len = 0;
     let mut curr_len = 0;

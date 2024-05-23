@@ -1,6 +1,7 @@
 use crate::dto::{
-    GetAccountMagicNos, GetAccounts, GetMagicNoStats, GetMagicNosRequestQuery, GetTradesStats,
-    MagicApiJson, MagicApiQuery, Message, ResponseData,
+    GetAccountMagicNos, GetAccounts, GetAllMagicNoStats, GetAllTradesStats,
+    GetMagicNosRequestQuery, GetSingleMagicNoStats, GetSingleTradesStats, MagicApiJson,
+    MagicApiQuery, Message, ResponseData,
 };
 use axum::extract::State;
 use sea_orm::Condition;
@@ -78,18 +79,33 @@ pub async fn get_magic_nos(
 }
 
 #[axum::debug_handler]
-pub async fn get_trades_stats(
+pub async fn get_single_trades_stats(
     State(db): State<DatabaseConnection>,
-    MagicApiQuery(params): MagicApiQuery<GetTradesStats>,
-) -> MagicApiResult<MagicApiJson<ResponseData<GetMagicNoStats>>> {
-    let magic_numbers = magic::Entity::find()
-        .filter(
-            Condition::all()
-                .add(magic::Column::Account.eq(&params.account))
-                .add(magic::Column::MagicNumber.eq(params.magic_no)),
-        )
-        .all(&db)
-        .await?;
+    MagicApiQuery(params): MagicApiQuery<GetSingleTradesStats>,
+) -> MagicApiResult<MagicApiJson<ResponseData<GetSingleMagicNoStats>>> {
+    let magic_numbers: Vec<magic::Model>;
+
+    if params.start_date.is_some() && params.end_date.is_some() {
+        magic_numbers = magic::Entity::find()
+            .filter(
+                Condition::all()
+                    .add(magic::Column::Account.eq(&params.account))
+                    .add(magic::Column::MagicNumber.eq(params.magic_no))
+                    .add(magic::Column::OpenTime.gte(params.start_date.unwrap()))
+                    .add(magic::Column::CloseTime.lte(params.end_date.unwrap())),
+            )
+            .all(&db)
+            .await?;
+    } else {
+        magic_numbers = magic::Entity::find()
+            .filter(
+                Condition::all()
+                    .add(magic::Column::Account.eq(&params.account))
+                    .add(magic::Column::MagicNumber.eq(params.magic_no)),
+            )
+            .all(&db)
+            .await?;
+    }
 
     if magic_numbers.is_empty() {
         warn!(
@@ -180,7 +196,7 @@ pub async fn get_trades_stats(
         );
     }
 
-    let stats = GetMagicNoStats {
+    let stats = GetSingleMagicNoStats {
         account: params.account,
         magic_number: params.magic_no,
         trades_count: magic_numbers.len(),
@@ -215,4 +231,64 @@ pub async fn get_trades_stats(
     };
 
     Ok(MagicApiJson::new(ResponseData::new(200, None, Some(stats))))
+}
+
+#[axum::debug_handler]
+pub async fn get_all_trades_stats(
+    State(db): State<DatabaseConnection>,
+    MagicApiQuery(params): MagicApiQuery<GetAllTradesStats>,
+) -> MagicApiResult<MagicApiJson<ResponseData<GetAllMagicNoStats>>> {
+    let magic_numbers_entries = magic::Entity::find()
+        .filter(Condition::all().add(magic::Column::Account.eq(&params.account)))
+        .select_column(magic::Column::MagicNumber)
+        .distinct_on([magic::Column::MagicNumber])
+        .all(&db)
+        .await?;
+
+    if magic_numbers_entries.is_empty() {
+        warn!("No entries found for Account: {}", params.account);
+        return Ok(MagicApiJson::new(ResponseData::new(
+            200,
+            Some(Message::EmptyData.into()),
+            None,
+        )));
+    }
+
+    let magic_numbers = magic_numbers_entries
+        .into_iter()
+        .map(|row| row.get(magic::Column::MagicNumber).unwrap::<i32>())
+        .collect::<Vec<i32>>();
+
+    let mut stats = GetAllMagicNoStats::new();
+
+    for m_no in magic_numbers {
+        let db_state = State(db.clone());
+
+        let query_param = MagicApiQuery(GetSingleTradesStats {
+            account: params.account.clone(),
+            magic_no: m_no,
+            start_date: params.start_date,
+            end_date: params.end_date,
+        });
+
+        let single_mno_stat = get_single_trades_stats(db_state, query_param).await;
+
+        if let Ok(stat) = single_mno_stat {
+            let response = stat.0;
+            let data = response.data;
+            if let Some(inner_stat) = data {
+                stats.push_stat(inner_stat)
+            }
+        }
+    }
+
+    if stats.data().is_empty() {
+        Ok(MagicApiJson::new(ResponseData::new(
+            200,
+            Some(Message::EmptyData.into()),
+            None,
+        )))
+    } else {
+        Ok(MagicApiJson::new(ResponseData::new(200, None, Some(stats))))
+    }
 }

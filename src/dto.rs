@@ -1,6 +1,7 @@
 use crate::error::MagicApiError;
 use axum::extract::FromRequestParts;
 use axum::{body::Body, extract::FromRequest, http::Response, response::IntoResponse};
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(FromRequestParts, Deserialize)]
@@ -13,9 +14,18 @@ pub struct GetMagicNosRequestQuery {
 }
 
 #[derive(Deserialize)]
-pub struct GetTradesStats {
+pub struct GetSingleTradesStats {
     pub account: String,
     pub magic_no: i32,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
+}
+
+#[derive(Deserialize)]
+pub struct GetAllTradesStats {
+    pub account: String,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
 }
 
 pub enum Message {
@@ -78,7 +88,7 @@ pub struct GetAccountMagicNos {
 }
 
 #[derive(Serialize)]
-pub struct GetMagicNoStats {
+pub struct GetSingleMagicNoStats {
     pub account: String,
     pub magic_number: i32,
     pub trades_count: usize,
@@ -110,4 +120,24 @@ pub struct GetMagicNoStats {
     pub consecutive_profits: Option<f32>,
     pub consecutive_lose_trades: Option<usize>,
     pub consecutive_losses: Option<f32>,
+}
+
+#[derive(Serialize)]
+pub struct GetAllMagicNoStats {
+    data: Vec<GetSingleMagicNoStats>,
+}
+
+#[allow(clippy::new_without_default)]
+impl GetAllMagicNoStats {
+    pub fn new() -> Self {
+        Self { data: Vec::new() }
+    }
+
+    pub fn data(&self) -> &Vec<GetSingleMagicNoStats> {
+        &self.data
+    }
+
+    pub fn push_stat(&mut self, stat: GetSingleMagicNoStats) {
+        self.data.push(stat);
+    }
 }
