@@ -1,5 +1,5 @@
 use crate::dto::{
-    GetAccountMagicNos, GetAccounts, GetAllMagicNoStats, GetAllTradesStats,
+    GetAccountMagicNos, GetAccounts, GetAllMagicNoStats, GetAllTradesStats, GetMagicNoTrades,
     GetMagicNosRequestQuery, GetSingleMagicNoStats, GetSingleTradesStats, MagicApiJson,
     MagicApiQuery, Message, ResponseData,
 };
@@ -83,10 +83,8 @@ pub async fn get_single_trades_stats(
     State(db): State<DatabaseConnection>,
     MagicApiQuery(params): MagicApiQuery<GetSingleTradesStats>,
 ) -> MagicApiResult<MagicApiJson<ResponseData<GetSingleMagicNoStats>>> {
-    let magic_numbers: Vec<magic::Model>;
-
-    if params.start_date.is_some() && params.end_date.is_some() {
-        magic_numbers = magic::Entity::find()
+    let magic_numbers = if params.start_date.is_some() && params.end_date.is_some() {
+        magic::Entity::find()
             .filter(
                 Condition::all()
                     .add(magic::Column::Account.eq(&params.account))
@@ -95,17 +93,17 @@ pub async fn get_single_trades_stats(
                     .add(magic::Column::CloseTime.lte(params.end_date.unwrap())),
             )
             .all(&db)
-            .await?;
+            .await?
     } else {
-        magic_numbers = magic::Entity::find()
+        magic::Entity::find()
             .filter(
                 Condition::all()
                     .add(magic::Column::Account.eq(&params.account))
                     .add(magic::Column::MagicNumber.eq(params.magic_no)),
             )
             .all(&db)
-            .await?;
-    }
+            .await?
+    };
 
     if magic_numbers.is_empty() {
         warn!(
@@ -290,5 +288,52 @@ pub async fn get_all_trades_stats(
         )))
     } else {
         Ok(MagicApiJson::new(ResponseData::new(200, None, Some(stats))))
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_magic_no_trades(
+    State(db): State<DatabaseConnection>,
+    MagicApiQuery(params): MagicApiQuery<GetMagicNoTrades>,
+) -> MagicApiResult<MagicApiJson<ResponseData<Vec<magic::Model>>>> {
+    let magic_number_trades = if params.page.is_some() && params.page_size.is_some() {
+        let page = params.page.unwrap_or(1);
+        let page_size = params.page_size.unwrap_or(1000);
+        let offset = (page - 1) * page_size;
+
+        magic::Entity::find()
+            .filter(
+                Condition::all()
+                    .add(magic::Column::Account.eq(&params.account))
+                    .add(magic::Column::MagicNumber.eq(params.magic_no)),
+            )
+            .limit(page_size as u64)
+            .offset(offset as u64)
+            .all(&db)
+            .await?
+    } else {
+        magic::Entity::find()
+            .filter(
+                Condition::all()
+                    .add(magic::Column::Account.eq(&params.account))
+                    .add(magic::Column::MagicNumber.eq(params.magic_no)),
+            )
+            .all(&db)
+            .await?
+    };
+    println!("sasas");
+
+    if magic_number_trades.is_empty() {
+        Ok(MagicApiJson::new(ResponseData::new(
+            200,
+            Some(Message::EmptyData.into()),
+            None,
+        )))
+    } else {
+        Ok(MagicApiJson::new(ResponseData::new(
+            200,
+            None,
+            Some(magic_number_trades),
+        )))
     }
 }

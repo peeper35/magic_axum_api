@@ -14,6 +14,14 @@ pub struct GetMagicNosRequestQuery {
 }
 
 #[derive(Deserialize)]
+pub struct GetMagicNoTrades {
+    pub account: String,
+    pub magic_no: i32,
+    pub page: Option<u32>,
+    pub page_size: Option<u32>,
+}
+
+#[derive(Deserialize)]
 pub struct GetSingleTradesStats {
     pub account: String,
     pub magic_no: i32,
