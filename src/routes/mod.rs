@@ -2,7 +2,8 @@ use axum::{routing::get, Router};
 use std::env;
 
 use crate::routes::handlers::{
-    get_accounts, get_all_trades_stats, get_magic_no_trades, get_magic_nos, get_single_trades_stats,
+    get_accounts, get_all_trades_stats, get_all_trades_stats_top_ten, get_magic_no_trades,
+    get_magic_nos, get_single_trades_stats,
 };
 use crate::{conn::get_connection, error::MagicAppResult};
 
@@ -21,6 +22,10 @@ pub async fn mount() -> MagicAppResult<Router> {
         .route("/account/magic_nos", get(get_magic_nos))
         .route("/account/single_trades_stats", get(get_single_trades_stats))
         .route("/account/all_trades_stats", get(get_all_trades_stats))
+        .route(
+            "/account/all_trades_stats_top_ten",
+            get(get_all_trades_stats_top_ten),
+        )
         .route("/account/get_magic_no_trades", get(get_magic_no_trades))
         .with_state(db_conn);
 

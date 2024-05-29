@@ -1,27 +1,32 @@
+use std::collections::HashMap;
+
+use crate::entities::magic::Model;
 use crate::error::MagicApiError;
 use axum::extract::FromRequestParts;
 use axum::{body::Body, extract::FromRequest, http::Response, response::IntoResponse};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-#[derive(FromRequestParts, Deserialize)]
+#[derive(FromRequestParts, Deserialize, Debug, Clone)]
 #[from_request(via(axum::extract::Query), rejection(MagicApiError))]
 pub struct MagicApiQuery<T>(pub T);
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct GetMagicNosRequestQuery {
     pub account: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct GetMagicNoTrades {
     pub account: String,
     pub magic_no: i32,
     pub page: Option<u32>,
     pub page_size: Option<u32>,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct GetSingleTradesStats {
     pub account: String,
     pub magic_no: i32,
@@ -29,9 +34,15 @@ pub struct GetSingleTradesStats {
     pub end_date: Option<NaiveDate>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct GetAllTradesStats {
     pub account: String,
+    pub start_date: Option<NaiveDate>,
+    pub end_date: Option<NaiveDate>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct GetAllTopTenEas {
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
 }
@@ -67,7 +78,7 @@ where
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug, Clone)]
 pub struct ResponseData<D> {
     pub status_code: u16,
     pub msg: Option<String>,
@@ -84,19 +95,19 @@ impl<T> ResponseData<T> {
     }
 }
 
-#[derive(Serialize)]
-pub struct GetAccounts {
+#[derive(Serialize, Debug, Clone)]
+pub struct RGetAccounts {
     pub accounts: Vec<String>,
 }
 
-#[derive(Serialize)]
-pub struct GetAccountMagicNos {
+#[derive(Serialize, Debug, Clone)]
+pub struct RGetAccountMagicNos {
     pub account: String,
     pub magic_numbers: Vec<i32>,
 }
 
-#[derive(Serialize)]
-pub struct GetSingleMagicNoStats {
+#[derive(Serialize, Debug, Clone)]
+pub struct RGetSingleMagicNoStats {
     pub account: String,
     pub magic_number: i32,
     pub trades_count: usize,
@@ -130,22 +141,56 @@ pub struct GetSingleMagicNoStats {
     pub consecutive_losses: Option<f32>,
 }
 
-#[derive(Serialize)]
-pub struct GetAllMagicNoStats {
-    data: Vec<GetSingleMagicNoStats>,
+#[derive(Serialize, Debug, Clone)]
+pub struct RGetAllMagicNoStats {
+    data: Vec<RGetSingleMagicNoStats>,
 }
 
 #[allow(clippy::new_without_default)]
-impl GetAllMagicNoStats {
+impl RGetAllMagicNoStats {
     pub fn new() -> Self {
         Self { data: Vec::new() }
     }
 
-    pub fn data(&self) -> &Vec<GetSingleMagicNoStats> {
+    pub fn data(&self) -> &Vec<RGetSingleMagicNoStats> {
         &self.data
     }
 
-    pub fn push_stat(&mut self, stat: GetSingleMagicNoStats) {
+    pub fn push_stat(&mut self, stat: RGetSingleMagicNoStats) {
         self.data.push(stat);
+    }
+
+    pub fn filter_top_ten(self) -> Self {
+        Self {
+            data: self
+                .data
+                .into_iter()
+                .filter(|s| s.profit_factor >= 1.2 && s.trades_count >= 5)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct RGetAllMagicNoTrades {
+    pub entries_count: usize,
+    pub data: Vec<Model>,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct RGetAllTopTenEas {
+    pub data: HashMap<String, RGetAllMagicNoStats>,
+}
+
+#[allow(clippy::new_without_default)]
+impl RGetAllTopTenEas {
+    pub fn new() -> Self {
+        Self {
+            data: HashMap::new(),
+        }
+    }
+
+    pub fn insert_data(&mut self, key: String, value: RGetAllMagicNoStats) {
+        self.data.insert(key, value);
     }
 }
