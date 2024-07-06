@@ -588,8 +588,8 @@ pub async fn get_all_trades_stats_top_ten(
     let mut response = RGetAllTopTenEas::new();
 
     for future in response_futures {
-        if let Ok(Some((account, top_ten_stats))) = future.await {
-            response.insert_data(account, top_ten_stats);
+        if let Ok(Some((_account, top_ten_stats))) = future.await {
+            response.insert_data(top_ten_stats);
         }
     }
 

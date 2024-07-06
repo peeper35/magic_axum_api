@@ -190,7 +190,15 @@ impl RGetAllTopTenEas {
         }
     }
 
-    pub fn insert_data(&mut self, key: String, value: RGetAllMagicNoStats) {
-        self.data.insert(key, value);
+    pub fn insert_data(&mut self, value: RGetAllMagicNoStats) {
+        let mut range = String::new();
+        if !value.data().is_empty() {
+            range = format!(
+                "{}-{}",
+                value.data[0].magic_number,
+                value.data[value.data.len() - 1].magic_number
+            );
+        }
+        self.data.insert(range, value);
     }
 }
