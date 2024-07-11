@@ -168,3 +168,11 @@ pub fn format_timedelta(time: &TimeDelta) -> String {
 
     format!("{}:{}", hours, minutes)
 }
+
+pub fn first_digit(n: i32) -> i32 {
+    let mut n = n;
+    while n >= 10 {
+        n /= 10;
+    }
+    n
+}

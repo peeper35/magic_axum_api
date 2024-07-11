@@ -17,8 +17,8 @@ use sea_orm::{
 use crate::entities::magic;
 use crate::error::MagicApiResult;
 use crate::routes::helpers::{
-    format_timedelta, get_longest_lose_seq, get_longest_shortest_trades, get_longest_win_seq,
-    get_win_loss_trades,
+    first_digit, format_timedelta, get_longest_lose_seq, get_longest_shortest_trades,
+    get_longest_win_seq, get_win_loss_trades,
 };
 
 async fn calculate_stats_for_magic_no(
@@ -585,13 +585,32 @@ pub async fn get_all_trades_stats_top_ten(
         })
         .collect();
 
-    let mut response = RGetAllTopTenEas::new();
+    let mut sorted_vec = vec![];
 
     for future in response_futures {
-        if let Ok(Some((account, top_ten_stats))) = future.await {
-            response.insert_data(account, top_ten_stats);
+        if let Ok(Some((_account, top_ten_stats))) = future.await {
+            sorted_vec.extend_from_slice(top_ten_stats.data())
         }
     }
+
+    sorted_vec.sort_by_key(|s| first_digit(s.magic_number));
+
+    let mut map: HashMap<i32, Vec<RGetSingleMagicNoStats>> = HashMap::new();
+    for s in sorted_vec {
+        map.entry(first_digit(s.magic_number))
+            .or_insert_with(Vec::new)
+            .push(s);
+    }
+
+    let sorted_map: HashMap<i32, RGetAllMagicNoStats> = map
+        .into_iter()
+        .map(|(key, mut vec)| {
+            vec.sort_by_key(|s| s.magic_number);
+            (key, RGetAllMagicNoStats { data: vec })
+        })
+        .collect();
+
+    let response = RGetAllTopTenEas { data: sorted_map };
 
     if response.data.is_empty() {
         Ok(MagicApiJson::new(ResponseData::new(

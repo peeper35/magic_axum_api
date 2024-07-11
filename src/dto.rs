@@ -143,7 +143,7 @@ pub struct RGetSingleMagicNoStats {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct RGetAllMagicNoStats {
-    data: Vec<RGetSingleMagicNoStats>,
+    pub data: Vec<RGetSingleMagicNoStats>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -179,7 +179,7 @@ pub struct RGetAllMagicNoTrades {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct RGetAllTopTenEas {
-    pub data: HashMap<String, RGetAllMagicNoStats>,
+    pub data: HashMap<i32, RGetAllMagicNoStats>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -190,7 +190,7 @@ impl RGetAllTopTenEas {
         }
     }
 
-    pub fn insert_data(&mut self, key: String, value: RGetAllMagicNoStats) {
-        self.data.insert(key, value);
+    pub fn insert_data(&mut self, data: HashMap<i32, RGetAllMagicNoStats>) {
+        self.data = data;
     }
 }
