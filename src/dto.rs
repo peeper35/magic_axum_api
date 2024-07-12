@@ -45,6 +45,12 @@ pub struct GetAllTradesStats {
 pub struct GetAllTopTenEas {
     pub start_date: Option<NaiveDate>,
     pub end_date: Option<NaiveDate>,
+    pub trade_type: Option<String>,
+    pub profit: Option<bool>,
+    pub magic_number: Option<i32>,
+    pub pf: Option<f32>,
+    pub win_percentage: Option<f32>,
+    pub no_of_trades: Option<usize>,
 }
 
 pub enum Message {

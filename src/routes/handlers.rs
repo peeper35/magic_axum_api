@@ -159,7 +159,15 @@ async fn process_account(
                 .add(magic::Column::Account.eq(&account))
                 .add(magic::Column::MagicNumber.is_in(magic_numbers.clone()))
                 .add_option(params.0.start_date.map(|d| magic::Column::OpenTime.gte(d)))
-                .add_option(params.0.end_date.map(|d| magic::Column::OpenTime.lte(d))),
+                .add_option(params.0.end_date.map(|d| magic::Column::OpenTime.lte(d)))
+                .add_option(params.0.trade_type.map(|d| magic::Column::OrderType.eq(d)))
+                .add_option(params.0.profit.map(|d| {
+                    if d {
+                        magic::Column::Pnl.gt(0.0)
+                    } else {
+                        magic::Column::Pnl.lt(0.0)
+                    }
+                })),
         )
         .all(&db)
         .await
@@ -585,18 +593,73 @@ pub async fn get_all_trades_stats_top_ten(
         })
         .collect();
 
-    let mut sorted_vec = vec![];
+    // let mut all_data = vec![];
 
-    for future in response_futures {
-        if let Ok(Some((_account, top_ten_stats))) = future.await {
-            sorted_vec.extend_from_slice(top_ten_stats.data())
-        }
-    }
+    // for future in response_futures {
+    //     if let Ok(Some((_account, top_ten_stats))) = future.await {
+    //         all_data.extend_from_slice(top_ten_stats.data())
+    //     }
+    // }
 
-    sorted_vec.sort_by_key(|s| first_digit(s.magic_number));
+    let all_data = futures::future::join_all(response_futures)
+        .await
+        .into_iter()
+        .filter_map(|result| result.ok())
+        .filter_map(|res| res)
+        .flat_map(|(_account, top_ten_stats)| top_ten_stats.data().to_vec())
+        .collect::<Vec<RGetSingleMagicNoStats>>();
+
+    // let mut filtered_and_sorted: Vec<RGetSingleMagicNoStats> = all_data
+    //     .into_iter()
+    //     .filter(|s| params.magic_number.map_or(true, |mn| s.magic_number == mn))
+    //     .filter(|s| params.pf.map_or(true, |pf| s.profit_factor >= pf))
+    //     .filter(|s| {
+    //         params
+    //             .win_percentage
+    //             .map_or(true, |wp| s.win_percentage >= wp)
+    //     })
+    //     .filter(|s| {
+    //         params
+    //             .no_of_trades
+    //             .map_or(true, |not| s.trades_count >= not)
+    //     })
+    //     .collect();
+
+    // filtered_and_sorted.sort_by_key(|s| first_digit(s.magic_number));
+
+    // let mut map: HashMap<i32, Vec<RGetSingleMagicNoStats>> = HashMap::new();
+    // for s in filtered_and_sorted {
+    //     map.entry(first_digit(s.magic_number))
+    //         .or_insert_with(Vec::new)
+    //         .push(s);
+    // }
+
+    // let sorted_map: HashMap<i32, RGetAllMagicNoStats> = map
+    //     .into_iter()
+    //     .map(|(key, mut vec)| {
+    //         vec.sort_by_key(|s| s.magic_number);
+    //         (key, RGetAllMagicNoStats { data: vec })
+    //     })
+    //     .collect();
+
+    let filtered_and_sorted: Vec<RGetSingleMagicNoStats> = all_data
+        .into_iter()
+        .filter(|s| params.magic_number.map_or(true, |mn| s.magic_number == mn))
+        .filter(|s| params.pf.map_or(true, |pf| s.profit_factor >= pf))
+        .filter(|s| {
+            params
+                .win_percentage
+                .map_or(true, |wp| s.win_percentage >= wp)
+        })
+        .filter(|s| {
+            params
+                .no_of_trades
+                .map_or(true, |not| s.trades_count >= not)
+        })
+        .collect();
 
     let mut map: HashMap<i32, Vec<RGetSingleMagicNoStats>> = HashMap::new();
-    for s in sorted_vec {
+    for s in filtered_and_sorted {
         map.entry(first_digit(s.magic_number))
             .or_insert_with(Vec::new)
             .push(s);
