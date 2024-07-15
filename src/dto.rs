@@ -185,7 +185,7 @@ pub struct RGetAllMagicNoTrades {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct RGetAllTopTenEas {
-    pub data: HashMap<i32, RGetAllMagicNoStats>,
+    pub data: HashMap<String, RGetAllMagicNoStats>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -196,7 +196,7 @@ impl RGetAllTopTenEas {
         }
     }
 
-    pub fn insert_data(&mut self, data: HashMap<i32, RGetAllMagicNoStats>) {
-        self.data = data;
+    pub fn insert_data(&mut self, key: String, value: RGetAllMagicNoStats) {
+        self.data.insert(key, value);
     }
 }

@@ -50,129 +50,178 @@ pub fn get_longest_shortest_trades(
         shortest_time,
         total_duration,
     )
-
-    // let mut total_time_diff_secs = TimeDelta::new(0, 0).unwrap();
-    //
-    // let mut longest_trade: Option<String> = None;
-    // let mut longest_trade_time = TimeDelta::new(0, 0).unwrap();
-    //
-    // for trade in trades {
-    //     let start_time = trade.open_time;
-    //     let end_time = trade.close_time;
-    //     let difference = end_time - start_time;
-    //
-    //     if difference > longest_trade_time {
-    //         longest_trade = Some(trade.order_id.to_string());
-    //         longest_trade_time = difference;
-    //     }
-    // }
-    //
-    // let mut shortest_trade: Option<String> = None;
-    // let mut shortest_trade_time = TimeDelta::new(31560000, 0).unwrap();
-    //
-    // for trade in trades {
-    //     let start_time = trade.open_time;
-    //     let end_time = trade.close_time;
-    //     let difference = end_time - start_time;
-    //
-    //     total_time_diff_secs += difference;
-    //
-    //     if difference < shortest_trade_time {
-    //         shortest_trade = Some(trade.order_id.to_string());
-    //         shortest_trade_time = difference;
-    //     }
-    // }
-    //
-    // (longest_trade, longest_trade_time, shortest_trade, shortest_trade_time, total_time_diff_secs)
 }
+
+// pub fn get_longest_win_seq(pnls: &[f32]) -> Option<(usize, f32)> {
+//     let mut max_idx = 0;
+//     let mut max_len = 0;
+//     let mut curr_len = 0;
+//     let mut curr_idx = 0;
+
+//     for (k, &num) in pnls.iter().enumerate() {
+//         if num > 0.0 {
+//             curr_len += 1;
+
+//             // New sequence, store beginning index.
+//             if curr_len == 1 {
+//                 curr_idx = k;
+//             }
+//         } else {
+//             if curr_len > max_len {
+//                 max_len = curr_len;
+//                 max_idx = curr_idx;
+//             }
+//             curr_len = 0;
+//         }
+//     }
+
+//     if curr_len > max_len {
+//         max_len = curr_len;
+//         max_idx = curr_idx;
+//     }
+
+//     if max_len > 0 {
+//         return Some((
+//             max_len,
+//             pnls[max_idx..max_idx + max_len].iter().sum::<f32>(),
+//         ));
+//     }
+
+//     None
+// }
 
 pub fn get_longest_win_seq(pnls: &[f32]) -> Option<(usize, f32)> {
-    let mut max_idx = 0;
-    let mut max_len = 0;
-    let mut curr_len = 0;
-    let mut curr_idx = 0;
+    let mut max_start_idx = 0;
+    let mut max_length = 0;
+    let mut current_length = 0;
+    let mut current_start_idx = 0;
 
-    for (k, &num) in pnls.iter().enumerate() {
-        if num > 0.0 {
-            curr_len += 1;
-
-            // New sequence, store beginning index.
-            if curr_len == 1 {
-                curr_idx = k;
+    for (i, &pnl) in pnls.iter().enumerate() {
+        if pnl > 0.0 {
+            if current_length == 0 {
+                current_start_idx = i;
             }
+            current_length += 1;
         } else {
-            if curr_len > max_len {
-                max_len = curr_len;
-                max_idx = curr_idx;
+            if current_length > max_length {
+                max_length = current_length;
+                max_start_idx = current_start_idx;
             }
-            curr_len = 0;
+            current_length = 0;
         }
     }
 
-    if curr_len > max_len {
-        max_len = curr_len;
-        max_idx = curr_idx;
+    if current_length > max_length {
+        max_length = current_length;
+        max_start_idx = current_start_idx;
     }
 
-    if max_len > 0 {
-        return Some((
-            max_len,
-            pnls[max_idx..max_idx + max_len].iter().sum::<f32>(),
-        ));
+    if max_length > 0 {
+        Some((
+            max_length,
+            f32_round(
+                pnls[max_start_idx..max_start_idx + max_length].iter().sum(),
+                2,
+            ),
+        ))
+    } else {
+        None
     }
-
-    None
 }
 
+// pub fn get_longest_lose_seq(pnls: &[f32]) -> Option<(usize, f32)> {
+//     let mut max_idx = 0;
+//     let mut max_len = 0;
+//     let mut curr_len = 0;
+//     let mut curr_idx = 0;
+
+//     for (k, &num) in pnls.iter().enumerate() {
+//         if num < 0.0 {
+//             curr_len += 1;
+
+//             // New sequence, store beginning index.
+//             if curr_len == 1 {
+//                 curr_idx = k;
+//             }
+//         } else {
+//             if curr_len > max_len {
+//                 max_len = curr_len;
+//                 max_idx = curr_idx;
+//             }
+//             curr_len = 0;
+//         }
+//     }
+
+//     if curr_len > max_len {
+//         max_len = curr_len;
+//         max_idx = curr_idx;
+//     }
+
+//     if max_len > 0 {
+//         return Some((
+//             max_len,
+//             pnls[max_idx..max_idx + max_len].iter().sum::<f32>(),
+//         ));
+//     }
+
+//     None
+// }
+
 pub fn get_longest_lose_seq(pnls: &[f32]) -> Option<(usize, f32)> {
-    let mut max_idx = 0;
-    let mut max_len = 0;
-    let mut curr_len = 0;
-    let mut curr_idx = 0;
+    let mut max_start_idx = 0;
+    let mut max_length = 0;
+    let mut current_length = 0;
+    let mut current_start_idx = 0;
 
-    for (k, &num) in pnls.iter().enumerate() {
-        if num < 0.0 {
-            curr_len += 1;
-
-            // New sequence, store beginning index.
-            if curr_len == 1 {
-                curr_idx = k;
+    for (i, &pnl) in pnls.iter().enumerate() {
+        if pnl < 0.0 {
+            if current_length == 0 {
+                current_start_idx = i;
             }
+            current_length += 1;
         } else {
-            if curr_len > max_len {
-                max_len = curr_len;
-                max_idx = curr_idx;
+            if current_length > max_length {
+                max_length = current_length;
+                max_start_idx = current_start_idx;
             }
-            curr_len = 0;
+            current_length = 0;
         }
     }
 
-    if curr_len > max_len {
-        max_len = curr_len;
-        max_idx = curr_idx;
+    if current_length > max_length {
+        max_length = current_length;
+        max_start_idx = current_start_idx;
     }
 
-    if max_len > 0 {
-        return Some((
-            max_len,
-            pnls[max_idx..max_idx + max_len].iter().sum::<f32>(),
-        ));
+    if max_length > 0 {
+        Some((
+            max_length,
+            f32_round(
+                pnls[max_start_idx..max_start_idx + max_length].iter().sum(),
+                2,
+            ),
+        ))
+    } else {
+        None
     }
-
-    None
 }
 
 pub fn format_timedelta(time: &TimeDelta) -> String {
     let hours = time.num_hours();
     let minutes = time.num_minutes() % 60;
 
-    format!("{}:{}", hours, minutes)
+    format!("{} hours {} mins", hours, minutes)
 }
 
-pub fn first_digit(n: i32) -> i32 {
-    let mut n = n;
-    while n >= 10 {
-        n /= 10;
-    }
-    n
+// pub fn first_digit(n: i32) -> i32 {
+//     let mut n = n;
+//     while n >= 10 {
+//         n /= 10;
+//     }
+//     n
+// }
+
+pub fn f32_round(x: f32, decimals: u32) -> f32 {
+    let y = 10i32.pow(decimals) as f32;
+    (x * y).round() / y
 }
