@@ -274,6 +274,7 @@ async fn process_account(
             Condition::all()
                 .add(magic::Column::Account.eq(&account))
                 .add(magic::Column::MagicNumber.is_in(magic_numbers.clone()))
+                .add(magic::Column::DataAccount.eq(true))
                 .add_option(params.0.start_date.map(|d| magic::Column::OpenTime.gte(d)))
                 .add_option(params.0.end_date.map(|d| magic::Column::OpenTime.lte(d)))
                 .add_option(params.0.trade_type.map(|d| magic::Column::OrderType.eq(d)))
@@ -554,6 +555,7 @@ pub async fn get_single_trades_stats(
     let filter_conditions = Condition::all()
         .add(magic::Column::Account.eq(&params.account))
         .add(magic::Column::MagicNumber.eq(params.magic_no))
+        .add(magic::Column::DataAccount.eq(true))
         .add_option(params.start_date.map(|d| magic::Column::OpenTime.gte(d)))
         .add_option(params.end_date.map(|d| magic::Column::OpenTime.lte(d)));
 

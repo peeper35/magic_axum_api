@@ -24,6 +24,7 @@ pub struct Model {
     pub commission: String,
     pub swap: String,
     pub comment: String,
+    pub data_account: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
