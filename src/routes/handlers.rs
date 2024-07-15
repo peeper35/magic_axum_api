@@ -328,9 +328,9 @@ async fn process_account(
         }
     }
 
-    let top_ten_stats = stats.filter_top_ten();
+    // let top_ten_stats = stats.filter_top_ten();
 
-    Some((account, top_ten_stats))
+    Some((account, stats))
 }
 
 #[axum::debug_handler]
