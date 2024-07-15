@@ -858,7 +858,9 @@ pub async fn get_all_trades_stats_top_ten(
     for result in results {
         if let Ok(Some((account, mut top_ten_stats))) = result {
             top_ten_stats.data.sort_by_key(|d| d.magic_number);
-            response.insert_data(account, top_ten_stats);
+            if !top_ten_stats.data().is_empty() {
+                response.insert_data(account, top_ten_stats);
+            }
         }
     }
 
