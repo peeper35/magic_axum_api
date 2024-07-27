@@ -7,6 +7,7 @@ use crate::dto::{
     ResponseData,
 };
 use axum::extract::State;
+use chrono::Days;
 use itertools::Itertools;
 use sea_orm::Condition;
 use sea_orm::{
@@ -276,7 +277,12 @@ async fn process_account(
                 .add(magic::Column::MagicNumber.is_in(magic_numbers.clone()))
                 .add(magic::Column::DataAccount.eq(true))
                 .add_option(params.0.start_date.map(|d| magic::Column::OpenTime.gte(d)))
-                .add_option(params.0.end_date.map(|d| magic::Column::OpenTime.lte(d)))
+                .add_option(
+                    params
+                        .0
+                        .end_date
+                        .map(|d| magic::Column::OpenTime.lte(d.checked_add_days(Days::new(1)))),
+                )
                 .add_option(params.0.trade_type.map(|d| magic::Column::OrderType.eq(d)))
                 .add_option(params.0.profit.map(|d| {
                     if d {
@@ -557,7 +563,11 @@ pub async fn get_single_trades_stats(
         .add(magic::Column::MagicNumber.eq(params.magic_no))
         .add(magic::Column::DataAccount.eq(true))
         .add_option(params.start_date.map(|d| magic::Column::OpenTime.gte(d)))
-        .add_option(params.end_date.map(|d| magic::Column::OpenTime.lte(d)));
+        .add_option(
+            params
+                .end_date
+                .map(|d| magic::Column::OpenTime.lte(d.checked_add_days(Days::new(1)))),
+        );
 
     let magic_numbers = magic::Entity::find()
         .filter(filter_conditions)
@@ -690,7 +700,10 @@ pub async fn get_all_trades_stats(
                 Condition::all()
                     .add(magic::Column::Account.eq(&params.account))
                     .add(magic::Column::OpenTime.gte(params.start_date.unwrap()))
-                    .add(magic::Column::OpenTime.lte(params.end_date.unwrap())),
+                    .add(
+                        magic::Column::OpenTime
+                            .lte(params.end_date.unwrap().checked_add_days(Days::new(1))),
+                    ),
             )
             .all(&db)
             .await?
@@ -763,7 +776,10 @@ pub async fn get_magic_no_trades(
                         .add(magic::Column::Account.eq(&params.account))
                         .add(magic::Column::MagicNumber.eq(params.magic_no))
                         .add(magic::Column::OpenTime.gte(params.start_date.unwrap()))
-                        .add(magic::Column::OpenTime.lte(params.end_date.unwrap())),
+                        .add(
+                            magic::Column::OpenTime
+                                .lte(params.end_date.unwrap().checked_add_days(Days::new(1))),
+                        ),
                 )
                 .limit(page_size as u64)
                 .offset(offset as u64)
@@ -788,7 +804,10 @@ pub async fn get_magic_no_trades(
                     .add(magic::Column::Account.eq(&params.account))
                     .add(magic::Column::MagicNumber.eq(params.magic_no))
                     .add(magic::Column::OpenTime.gte(params.start_date.unwrap()))
-                    .add(magic::Column::OpenTime.lte(params.end_date.unwrap())),
+                    .add(
+                        magic::Column::OpenTime
+                            .lte(params.end_date.unwrap().checked_add_days(Days::new(1))),
+                    ),
             )
             .all(&db)
             .await?
